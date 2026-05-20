@@ -1,0 +1,1564 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roadmap Soins — Aide Soignant</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root{
+  --bg:#0d0f14;--bg2:#13161e;--bg3:#1a1e28;--bg4:#21263a;
+  --border:rgba(255,255,255,.07);--bh:rgba(255,255,255,.14);
+  --text:#e8eaf0;--t2:#8b90a0;--t3:#555a6a;
+  --accent:#4fffb0;--as:#c084fc;--as-bg:rgba(192,132,252,.15);
+  --danger:#f87171;--warn:#facc15;
+  --r:12px;--rs:8px;--rxs:5px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);overflow:hidden;}
+::-webkit-scrollbar{width:4px;height:4px;}::-webkit-scrollbar-thumb{background:var(--bh);border-radius:4px;}
+
+/* LOGIN */
+#s-login{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:1000;}
+.lcard{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:2rem;width:340px;}
+.llogo{width:44px;height:44px;background:var(--as);border-radius:11px;display:flex;align-items:center;justify-content:center;margin:0 auto 1.1rem;font-size:22px;}
+.ltitle{text-align:center;font-size:1.1rem;font-weight:700;margin-bottom:.25rem;}
+.lsub{text-align:center;font-size:.75rem;color:var(--t3);margin-bottom:1.25rem;}
+.lerr{background:rgba(248,113,113,.1);color:var(--danger);font-size:.73rem;padding:.35rem .65rem;border-radius:var(--rxs);margin-bottom:.65rem;display:none;}
+.lf label{font-size:.63rem;font-weight:700;color:var(--t3);letter-spacing:.06em;text-transform:uppercase;display:block;margin-bottom:3px;}
+.lf input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);font-size:.85rem;padding:.5rem .75rem;outline:none;transition:border-color .2s;font-family:inherit;margin-bottom:.65rem;}
+.lf input:focus{border-color:var(--as);}
+.demo-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-top:.75rem;padding-top:.65rem;border-top:1px solid var(--border);}
+.demo-item{font-size:.62rem;color:var(--t2);}
+
+/* APP */
+#s-app{display:none;flex-direction:column;height:100%;}
+#s-app.on{display:flex;}
+.topbar{height:50px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 1rem;gap:.65rem;flex-shrink:0;z-index:100;}
+.tlogo{width:28px;height:28px;background:var(--as);border-radius:7px;font-size:16px;display:flex;align-items:center;justify-content:center;}
+.ttitle{font-size:.9rem;font-weight:700;}
+.tspc{flex:1;}
+.tdate{font-size:.68rem;color:var(--t3);font-family:monospace;}
+
+/* TABS */
+.navtabs{display:flex;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;padding:0 .75rem;overflow-x:auto;}
+.navtab{padding:.6rem .875rem;font-size:.73rem;font-weight:700;color:var(--t3);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;}
+.navtab.active{color:var(--as);border-bottom-color:var(--as);}
+
+/* CONTENT */
+.content{flex:1;overflow:hidden;display:flex;min-height:0;}
+.pane{display:none;flex:1;overflow:hidden;min-height:0;}
+.pane.active{display:flex;}
+
+/* SPLIT */
+.split{display:grid;grid-template-columns:400px 1fr;width:100%;overflow:hidden;}
+.sidebar{display:flex;flex-direction:column;overflow:hidden;border-right:1px solid var(--border);}
+.sb-head{padding:.75rem;border-bottom:1px solid var(--border);flex-shrink:0;}
+.scroll-body{flex:1;overflow-y:auto;}
+.map-wrap{position:relative;flex:1;}
+#map{width:100%;height:100%;}
+
+/* BUTTONS */
+.btn{padding:.45rem .8rem;border-radius:var(--rs);font-size:.75rem;font-weight:700;cursor:pointer;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-family:inherit;transition:all .15s;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;}
+.btn:hover{background:var(--bg4);border-color:var(--bh);}
+.btn:active{transform:scale(.98);}
+.btn-p{background:var(--as);color:#0d0f14;border-color:var(--as);}
+.btn-p:hover{filter:brightness(1.1);background:var(--as);}
+.btn-d{background:rgba(248,113,113,.1);color:var(--danger);border-color:rgba(248,113,113,.25);}
+.btn-d:hover{background:rgba(248,113,113,.2);}
+.btn-info{background:rgba(96,165,250,.1);color:#60a5fa;border-color:rgba(96,165,250,.25);}
+.btn-full{width:100%;justify-content:center;}
+.btn-sm{padding:.28rem .6rem;font-size:.68rem;}
+.btn-xs{padding:.18rem .45rem;font-size:.62rem;}
+
+/* FORM */
+.field{margin-bottom:.6rem;}
+.field label,.flbl{font-size:.62rem;font-weight:700;color:var(--t3);letter-spacing:.06em;text-transform:uppercase;display:block;margin-bottom:3px;}
+.field input,.field select,.field textarea{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);font-size:.8rem;padding:.42rem .65rem;outline:none;transition:border-color .2s;font-family:inherit;}
+.field select option{background:var(--bg3);}
+.field input:focus,.field select:focus{border-color:var(--as);}
+.field input::placeholder{color:var(--t3);}
+.field input[type=time]{width:auto;min-width:100px;}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.fsep{font-size:.62rem;font-weight:700;color:var(--t3);letter-spacing:.08em;text-transform:uppercase;padding:.5rem 0 .3rem;border-top:1px solid var(--border);margin-top:.4rem;}
+
+/* CARDS */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:.8rem .9rem;margin-bottom:.6rem;}
+.card-sm{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:.6rem .75rem;margin-bottom:.4rem;}
+
+/* BADGE/TAG */
+.badge{font-size:.6rem;font-weight:700;padding:2px 8px;border-radius:99px;display:inline-block;}
+.tag{font-size:.58rem;font-weight:700;padding:1px 6px;border-radius:4px;display:inline-block;}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse;font-size:.75rem;}
+.tbl th{text-align:left;padding:.45rem .6rem;font-size:.6rem;font-weight:700;color:var(--t3);letter-spacing:.07em;text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg3);position:sticky;top:0;z-index:1;}
+.tbl td{padding:.5rem .6rem;border-bottom:1px solid var(--border);vertical-align:middle;}
+.tbl tr:hover td{background:var(--bg3);}
+.twrap{border:1px solid var(--border);border-radius:var(--r);overflow:hidden;overflow-x:auto;}
+
+/* STATS */
+.stats-row{display:grid;gap:7px;padding:.65rem .75rem;flex-shrink:0;}
+.scard{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:.5rem .7rem;text-align:center;}
+.sval{font-size:1.1rem;font-weight:800;}
+.slbl{font-size:.56rem;color:var(--t3);font-weight:700;letter-spacing:.07em;text-transform:uppercase;}
+
+/* ROUTE STOPS */
+.rstop{padding:.6rem .75rem;border-bottom:1px solid var(--border);display:flex;gap:9px;cursor:pointer;transition:background .15s;}
+.rstop:hover{background:var(--bg3);}
+.rstop.dep{border-left:2px solid var(--accent);}
+.rstop.done{opacity:.4;}
+.rstop.done .sname{text-decoration:line-through;color:var(--t3);}
+.rstop.done .horaire-badge{filter:grayscale(1);}
+.rstop.done .ptags{opacity:.5;}
+.rstop.next{border-left:3px solid #4fffb0;background:rgba(79,255,176,.05);}
+.rstop.next .sname{color:#fff;}
+.next-badge{font-size:.6rem;font-weight:800;padding:2px 7px;border-radius:4px;background:rgba(79,255,176,.2);color:#4fffb0;letter-spacing:.04em;}
+.done-check{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--bh);background:var(--bg3);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;margin-top:2px;}
+.done-check.checked{background:var(--as);border-color:var(--as);}
+.done-check.checked::after{content:'✓';font-size:11px;color:#0d0f14;font-weight:900;}
+.plage-row{display:flex;align-items:center;gap:6px;margin-bottom:.6rem;}
+.plage-row label{font-size:.62rem;font-weight:700;color:var(--t3);letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;}
+.plage-row input[type=time]{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);padding:.3rem .5rem;font-size:.75rem;font-family:inherit;outline:none;width:90px;}
+.plage-row input[type=time]:focus{border-color:var(--as);}
+.snum{width:25px;height:25px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.67rem;font-weight:800;flex-shrink:0;font-family:monospace;}
+.sinfo{flex:1;min-width:0;}
+.sname{font-size:.8rem;font-weight:700;margin-bottom:1px;display:flex;align-items:center;gap:.35rem;flex-wrap:wrap;}
+.saddr{font-size:.64rem;color:var(--t2);font-family:monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sdist{font-size:.61rem;color:var(--t3);margin-top:3px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.dur{background:rgba(192,132,252,.15);color:var(--as);padding:1px 6px;border-radius:4px;font-weight:700;}
+.ptags{display:flex;flex-wrap:wrap;gap:3px;margin-top:3px;}
+.horaire-badge{font-size:.65rem;font-weight:700;color:var(--warn);background:rgba(250,204,21,.12);padding:2px 8px;border-radius:4px;}
+
+/* JOURS SELECTOR */
+.jours-sel{display:flex;gap:3px;flex-wrap:wrap;}
+.jour-btn{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;cursor:pointer;border:1px solid var(--border);background:var(--bg3);color:var(--t3);transition:all .15s;user-select:none;}
+.jour-btn.on{background:var(--as);color:#0d0f14;border-color:var(--as);}
+
+/* DAY TABS */
+.day-tab{padding:.3rem .65rem;border-radius:var(--rs);font-size:.7rem;font-weight:700;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--t3);transition:all .15s;white-space:nowrap;font-family:inherit;}
+.day-tab.active{background:var(--as);color:#0d0f14;border-color:var(--as);}
+
+/* PLANNING */
+.plan-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+.plan-day{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:.4rem .45rem;min-height:60px;}
+.plan-day-title{font-size:.6rem;font-weight:700;color:var(--t2);text-align:center;margin-bottom:.3rem;}
+.plan-slot{background:var(--as-bg);color:var(--as);border-radius:4px;padding:2px 5px;margin-bottom:2px;font-size:.58rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* TACHE ROW */
+.tache-row{display:flex;align-items:center;justify-content:space-between;padding:.35rem 0;border-bottom:1px solid var(--border);}
+.tache-row:last-child{border-bottom:none;}
+
+/* STATUS */
+.smsg{font-size:.7rem;padding:.35rem .6rem;border-radius:var(--rxs);margin:.4rem 0;display:none;}
+.smsg.ok{background:rgba(79,255,176,.1);color:var(--accent);display:block;}
+.smsg.err{background:rgba(248,113,113,.1);color:var(--danger);display:block;}
+.smsg.loading{background:rgba(250,204,21,.1);color:var(--warn);display:block;}
+
+/* MODAL */
+.mbg{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:500;display:none;align-items:center;justify-content:center;}
+.mbg.open{display:flex;}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1.1rem;width:580px;max-width:96vw;max-height:92vh;overflow-y:auto;}
+.mtitle{font-size:.92rem;font-weight:700;margin-bottom:.9rem;display:flex;align-items:center;justify-content:space-between;}
+.mclose{cursor:pointer;color:var(--t3);font-size:1rem;padding:2px 6px;border-radius:4px;transition:background .15s;}
+.mclose:hover{background:var(--bg3);color:var(--text);}
+.mfooter{display:flex;justify-content:flex-end;gap:.5rem;margin-top:.9rem;padding-top:.7rem;border-top:1px solid var(--border);}
+
+/* EMPTY */
+.empty{padding:1.5rem;text-align:center;color:var(--t3);font-size:.78rem;}
+
+/* LEAFLET */
+.leaflet-tile{filter:brightness(.87) saturate(.9);}
+.leaflet-container{background:#0a0d12;}
+.leaflet-popup-content-wrapper{background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.5);}
+.leaflet-popup-tip{background:var(--bg2);}
+.leaflet-popup-content{margin:9px 13px;font-size:.78rem;line-height:1.5;}
+.leaflet-popup-content b{color:var(--as);display:block;margin-bottom:1px;}
+.leaflet-control-zoom a{background:var(--bg2)!important;color:var(--text)!important;border-color:var(--border)!important;}
+.leaflet-control-attribution{background:rgba(13,15,20,.75)!important;color:var(--t3)!important;font-size:.56rem!important;}
+.leaflet-control-attribution a{color:var(--t2)!important;}
+.mk{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-family:monospace;font-size:11px;border:2px solid rgba(255,255,255,.15);box-shadow:0 2px 8px rgba(0,0,0,.5);}
+.mk-sq{border-radius:9px!important;width:34px!important;height:34px!important;font-size:14px!important;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="s-login">
+  <div class="lcard">
+    <div class="llogo">🤲</div>
+    <div class="ltitle">Roadmap Soins</div>
+    <div class="lsub">Aide soignant · Accès sécurisé</div>
+    <div class="lerr" id="lerr">Identifiants incorrects</div>
+    <div class="lf">
+      <label>Identifiant</label><input id="l-u" placeholder="login" autocomplete="username">
+      <label>Mot de passe</label><input id="l-p" type="password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn btn-p btn-full" onclick="doLogin()">Se connecter →</button>
+    <div style="font-size:.6rem;color:var(--t3);margin-top:.5rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding-top:.65rem;border-top:1px solid var(--border)">Comptes de démo</div>
+    <div class="demo-grid">
+      <span class="demo-item">admin / admin123</span>
+      <span class="demo-item">herve.as / pass123</span>
+      <span class="demo-item">bernard.as / pass123</span>
+    </div>
+    <div style="margin-top:.75rem;padding-top:.65rem;border-top:1px solid var(--border);text-align:center">
+      <button onclick="resetAndReload()" style="background:none;border:none;font-size:.65rem;color:var(--t3);cursor:pointer;text-decoration:underline">
+        Problème de connexion ? Réinitialiser les données
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="s-app">
+  <div class="topbar">
+    <div class="tlogo">🤲</div>
+    <span class="ttitle">Roadmap Soins</span>
+    <span class="badge" id="tb-role"></span>
+    <span class="tspc"></span>
+    <span style="font-size:.76rem;color:var(--t2)" id="tb-user"></span>
+    <span class="tdate" id="tb-date"></span>
+    <button class="btn btn-sm" onclick="doLogout()">Déconnexion</button>
+  </div>
+  <div class="navtabs" id="navtabs"></div>
+  <div class="content" id="content"></div>
+</div>
+
+<!-- MODAL PATIENT -->
+<div class="mbg" id="m-patient">
+  <div class="modal">
+    <div class="mtitle"><span id="mp-title">Patient</span><span class="mclose" onclick="closeM('m-patient')">✕</span></div>
+    <div class="fg2">
+      <div class="field"><label>Nom complet</label><input id="mp-nom" placeholder="Mme Dupont"></div>
+      <div class="field"><label>Rue</label><input id="mp-rue" placeholder="14 rue de la Paix"></div>
+    </div>
+    <div class="fg2">
+      <div class="field"><label>Code postal</label><input id="mp-cp" placeholder="10000"></div>
+      <div class="field"><label>Ville</label><input id="mp-ville" placeholder="Troyes"></div>
+    </div>
+    <div id="mp-geo" class="smsg"></div>
+    <div class="fsep">Jours de passage</div>
+    <div class="jours-sel" id="mp-jours" style="margin-bottom:.6rem"></div>
+    <div class="fsep">Tâches & horaires de rendez-vous</div>
+    <div id="mp-taches"></div>
+    <button class="btn btn-sm" style="margin-top:.5rem" onclick="addCustomTache()">+ Ajouter une tâche</button>
+    <div class="mfooter">
+      <button class="btn" onclick="closeM('m-patient')">Annuler</button>
+      <button class="btn btn-p" onclick="savePatient()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL UTILISATEUR -->
+<div class="mbg" id="m-user">
+  <div class="modal" style="max-width:380px">
+    <div class="mtitle"><span id="mu-title">Utilisateur</span><span class="mclose" onclick="closeM('m-user')">✕</span></div>
+    <div class="field"><label>Nom complet</label><input id="mu-nom" placeholder="Hervé Martin"></div>
+    <div class="fg2">
+      <div class="field"><label>Login</label><input id="mu-login" placeholder="herve.as"></div>
+      <div class="field"><label>Mot de passe</label><input id="mu-pass" placeholder="••••••••"></div>
+    </div>
+    <div class="mfooter">
+      <button class="btn" onclick="closeM('m-user')">Annuler</button>
+      <button class="btn btn-p" onclick="saveUser()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ASSIGNATION PATIENTS -->
+<div class="mbg" id="m-assign">
+  <div class="modal" style="max-width:480px">
+    <div class="mtitle"><span id="massign-title">Patients assignés</span><span class="mclose" onclick="closeM('m-assign')">✕</span></div>
+    <div id="massign-body"></div>
+    <div class="mfooter">
+      <button class="btn" onclick="closeM('m-assign')">Annuler</button>
+      <button class="btn btn-p" onclick="saveAssign()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL AJUSTER HORAIRES -->
+<div class="mbg" id="m-adjust">
+  <div class="modal" style="max-width:420px">
+    <div class="mtitle"><span id="madj-title">Ajuster mes horaires</span><span class="mclose" onclick="closeM('m-adjust')">✕</span></div>
+    <div id="madj-body"></div>
+    <div class="mfooter">
+      <button class="btn" onclick="closeM('m-adjust')">Annuler</button>
+      <button class="btn btn-p" onclick="saveAdjust()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CSV -->
+<div class="mbg" id="m-csv">
+  <div class="modal" style="max-width:520px">
+    <div class="mtitle"><span>Import CSV patients</span><span class="mclose" onclick="closeM('m-csv')">✕</span></div>
+    <p style="font-size:.75rem;color:var(--t2);margin-bottom:.6rem">Format attendu (en-tête obligatoire) :</p>
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:.5rem .65rem;font-family:monospace;font-size:.62rem;color:var(--t2);margin-bottom:.75rem;line-height:1.7">
+      nom,rue,cp,ville,jours,taches<br>
+      "Mme Dupont","14 rue de la Paix",10000,Troyes,"1,2,3,4,5","lever|07:30;toilette|08:00;medicaments|08:15;coucher|21:00"
+    </div>
+    <div class="field"><label>Fichier CSV</label><input type="file" id="csv-file" accept=".csv"></div>
+    <div id="csv-prev" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:.5rem;font-family:monospace;font-size:.62rem;color:var(--t2);max-height:120px;overflow-y:auto;margin:.4rem 0;display:none"></div>
+    <div id="csv-msg" class="smsg"></div>
+    <div class="mfooter">
+      <button class="btn" onclick="closeM('m-csv')">Annuler</button>
+      <button class="btn btn-info" onclick="previewCSV()">Prévisualiser</button>
+      <button class="btn btn-p" id="csv-do" style="display:none" onclick="importCSV()">Importer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════════════════════════════════════
+const JOURS_LABELS = ['','Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+const JOURS_FULL   = ['','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+const AS_COLOR     = '#c084fc';
+const AS_BG        = 'rgba(192,132,252,.15)';
+
+const TACHE_LABELS   = {lever:'Lever',toilette:'Toilette',medicaments:'Médicaments',coucher:'Coucher'};
+const TACHE_DEFAULTS = {lever:'07:30',toilette:'08:00',medicaments:'08:15',coucher:'21:00'};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════════════════
+let DB   = null;
+let CU   = null;   // current user
+let map  = null;
+let ML   = {r:[], m:[]};
+let editPid   = null;
+let editUid   = null;
+let assignUid = null;
+let adjData   = null;
+let csvParsed = [];
+let _tourneeToken = 0;
+let _customTacheCount = 0;
+let TACHE_LABELS_EXTRA = {};
+
+// Tâches cochées "faites" — { "jour_patientId": true }
+// Stockage mémoire uniquement (reset à chaque rechargement = journée suivante)
+const doneStops = {};
+
+
+function toggleDone(stopKey) {
+  doneStops[stopKey] = !doneStops[stopKey];
+  const isDone = doneStops[stopKey];
+
+  // 1. Style du stop dans la liste
+  const stopEl = document.getElementById(`stop-${stopKey}`);
+  if (stopEl) {
+    stopEl.classList.toggle('done', isDone);
+    const chk = stopEl.querySelector('.done-check');
+    if (chk) chk.classList.toggle('checked', isDone);
+  }
+
+  // 2. Marker mis à jour
+  refreshMarkerForKey(stopKey);
+
+  // 3. Mettre en évidence le prochain stop dans la liste
+  highlightNextStop();
+
+  // 4. Recalculer le tracé segmenté
+  refreshRoute();
+}
+
+function refreshMarkerForKey(stopKey) {
+  const entry = ML.markerMap?.[stopKey];
+  if (!entry || !map) return;
+  map.removeLayer(entry.marker);
+  const isDone = !!doneStops[stopKey];
+  const nextKey = getNextStopKey();
+  const isNext  = !isDone && stopKey === nextKey;
+
+  const col = isDone ? '#3a3d4a' : isNext ? '#4fffb0' : AS_COLOR;
+  const textCol = isDone ? '#8b90a0' : '#fff';
+  const lbl = isDone ? '✓' : String(entry.stopNum);
+  const zOff = isDone ? -200 : isNext ? 500 : (1000 - entry.stopNum * 10);
+
+  const m = L.marker([entry.stop.lat, entry.stop.lng], {
+    icon: L.divIcon({
+      className:'',
+      html:`<div style="width:30px;height:30px;border-radius:50%;background:${col};color:${col==='#4fffb0'?'#0d0f14':textCol};display:flex;align-items:center;justify-content:center;font-size:${isDone?13:11}px;font-weight:900;border:2px solid rgba(255,255,255,${isDone?.06:.18});box-shadow:0 2px 8px rgba(0,0,0,.5)${isNext?';outline:2px solid #4fffb0;outline-offset:2px':''}">  ${lbl}</div>`,
+      iconSize:[30,30], iconAnchor:[15,15], popupAnchor:[0,-15]
+    }),
+    interactive: !isDone,
+    zIndexOffset: zOff
+  });
+  if (!isDone) {
+    m.bindPopup(`<b>${entry.stop.nom}</b><br><small>${entry.stop.addr||''}</small><br><small style="color:${col}">RDV ${entry.stop.horaire}</small>`);
+  }
+  m.addTo(map);
+  ML.markerMap[stopKey].marker = m;
+}
+
+// Retourne la stopKey du prochain stop non fait
+function getNextStopKey() {
+  if (!ML.lastStops) return null;
+  const next = ML.lastStops.find(s => !s.isDepot && !doneStops[s.stopKey]);
+  return next ? next.stopKey : null;
+}
+
+// Met en évidence le prochain stop dans la liste
+function highlightNextStop() {
+  if (!ML.lastStops) return;
+  const nextKey = getNextStopKey();
+  ML.lastStops.forEach(s => {
+    if (s.isDepot) return;
+    const el = document.getElementById(`stop-${s.stopKey}`);
+    if (!el) return;
+    el.classList.toggle('next', s.stopKey === nextKey);
+    // Mettre à jour le badge PROCHAIN
+    const badge = el.querySelector('.next-badge');
+    if (s.stopKey === nextKey && !badge) {
+      const nameDiv = el.querySelector('.sname');
+      if (nameDiv) nameDiv.insertAdjacentHTML('beforeend', '<span class="next-badge">PROCHAIN</span>');
+    } else if (s.stopKey !== nextKey && badge) {
+      badge.remove();
+    }
+  });
+}
+
+async function refreshRoute() {
+  if (!ML.lastStops || !map) return;
+
+  ML.r.forEach(l => { try { map.removeLayer(l); } catch(e){} });
+  ML.r = [];
+
+  const stops = ML.lastStops;
+  if (stops.filter(s=>!s.isDepot).length === 0) return;
+
+  const nextKey = getNextStopKey();
+
+  // Un seul appel OSRM avec tous les stops (+ retour dépôt)
+  const pts = [...stops, stops[0]];
+  const res = await osrm(pts);
+
+  if (!res) {
+    drawSegmentsFallback(stops, nextKey);
+    return;
+  }
+
+  const geo = res.geo;
+  const waypoints = findWaypointIndices(geo, pts);
+  const greenSegments = [];
+
+  for (let i = 0; i < stops.length; i++) {
+    const a = stops[i];
+    const b = stops[(i + 1) % stops.length];
+    const segGeo = geo.slice(waypoints[i], waypoints[i + 1] + 1);
+    if (segGeo.length < 2) continue;
+
+    // b est-il le prochain stop à faire ?
+    const bIsNext = !b.isDepot && b.stopKey === nextKey;
+    // a a-t-il déjà été fait ?
+    const aFait = !a.isDepot && !!doneStops[a.stopKey];
+
+    if (bIsNext) {
+      // Segment vert : on va vers le prochain stop (quel que soit le départ)
+      greenSegments.push(segGeo);
+    } else if (aFait) {
+      // Segment gris : on part d'un stop déjà fait (trajet derrière nous)
+      const line = L.polyline(segGeo, {color:'#555a6a', weight:3, opacity:.25, dashArray:'5 4'}).addTo(map);
+      ML.r.push(line);
+    } else {
+      // Segment violet : à venir
+      const line = L.polyline(segGeo, {color:AS_COLOR, weight:3.5, opacity:.65}).addTo(map);
+      ML.r.push(line);
+    }
+  }
+
+  // Vert en dernier → au-dessus du violet et du gris
+  greenSegments.forEach(segGeo => {
+    const line = L.polyline(segGeo, {color:'#4fffb0', weight:5, opacity:1}).addTo(map);
+    ML.r.push(line);
+  });
+}
+
+// Trouve les indices dans la géométrie correspondant aux waypoints
+function findWaypointIndices(geo, pts) {
+  const indices = [];
+  let searchFrom = 0;
+  for (let p = 0; p < pts.length; p++) {
+    const pt = pts[p];
+    if (!pt.lat || !pt.lng) { indices.push(searchFrom); continue; }
+    let bestIdx = searchFrom;
+    let bestD = Infinity;
+    const limit = Math.min(geo.length, searchFrom + Math.ceil(geo.length / pts.length * 3));
+    for (let g = searchFrom; g < limit; g++) {
+      const dx = geo[g][0] - pt.lat;
+      const dy = geo[g][1] - pt.lng;
+      const d = dx*dx + dy*dy;
+      if (d < bestD) { bestD = d; bestIdx = g; }
+    }
+    indices.push(bestIdx);
+    searchFrom = bestIdx;
+  }
+  // Ajouter le dernier point (retour dépôt)
+  indices.push(geo.length - 1);
+  return indices;
+}
+
+// Fallback : tracé en lignes droites si OSRM indisponible
+function drawSegmentsFallback(stops, nextKey) {
+  const greenSegs = [];
+  for (let i = 0; i < stops.length; i++) {
+    const a = stops[i];
+    const b = stops[(i+1) % stops.length];
+    if (!a.lat||!a.lng||!b.lat||!b.lng) continue;
+    const bIsNext = !b.isDepot && b.stopKey === nextKey;
+    const aFait   = !a.isDepot && !!doneStops[a.stopKey];
+    const seg = [[a.lat,a.lng],[b.lat,b.lng]];
+    if (bIsNext)    { greenSegs.push(seg); }
+    else if (aFait) { ML.r.push(L.polyline(seg,{color:'#555a6a',weight:3,opacity:.25,dashArray:'5 4'}).addTo(map)); }
+    else            { ML.r.push(L.polyline(seg,{color:AS_COLOR,weight:3.5,opacity:.65,dashArray:'6 4'}).addTo(map)); }
+  }
+  greenSegs.forEach(seg => { ML.r.push(L.polyline(seg,{color:'#4fffb0',weight:5,opacity:1}).addTo(map)); });
+}
+
+let selJour  = getTodayNum();
+let selPlage = { debut: '', fin: '' }; // filtre horaire affichage
+
+// ═══════════════════════════════════════════════════════════════════════════
+// INIT / AUTH
+// ═══════════════════════════════════════════════════════════════════════════
+async function init() {
+  const stored = localStorage.getItem('roadmap_as_v1');
+  if (stored) {
+    DB = JSON.parse(stored);
+    if (!DB.adjustments) DB.adjustments = {};
+    if (!DB.assignations) DB.assignations = {};
+  } else {
+    // Essayer de charger data.json
+    try {
+      const r = await fetch('data.json');
+      if (!r.ok) throw new Error('not found');
+      DB = await r.json();
+    } catch {
+      DB = { users:[], patients:[], depot:{nom:'Cabinet',adresse:'Troyes',lat:48.297,lng:4.074} };
+    }
+    DB.adjustments = {};
+    DB.assignations = {};
+    // Nettoyer les patients : ne garder que les besoins aide_soignant
+    DB.patients = (DB.patients||[]).map(p => ({
+      ...p,
+      besoins: p.besoins?.aide_soignant ? { aide_soignant: p.besoins.aide_soignant } : {}
+    }));
+    saveDB();
+  }
+
+  // Toujours garantir les comptes obligatoires (admin + au moins un AS de démo)
+  // même si data.json était vide ou mal formé
+  if (!DB.users) DB.users = [];
+
+  // Admin
+  if (!DB.users.find(u => u.role === 'admin')) {
+    DB.users.unshift({id:'u_admin', login:'admin', password:'admin123', role:'admin', name:'Administrateur'});
+  }
+  // AS de démo (seulement si aucun AS n'existe)
+  if (!DB.users.find(u => u.role === 'aide_soignant')) {
+    DB.users.push(
+      {id:'u_herve', login:'herve.as', password:'pass123', role:'aide_soignant', name:'Hervé Dupré'},
+      {id:'u_bern',  login:'bernard.as', password:'pass123', role:'aide_soignant', name:'Bernard Laval'}
+    );
+  }
+  // Supprimer tous les rôles non autorisés
+  DB.users = DB.users.filter(u => u.role === 'admin' || u.role === 'aide_soignant');
+
+  saveDB();
+
+  document.getElementById('tb-date').textContent =
+    new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('l-p').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+}
+
+function saveDB() { localStorage.setItem('roadmap_as_v1', JSON.stringify(DB)); }
+function getTodayNum() { const d=new Date().getDay(); return d===0?7:d; }
+function resetAndReload() {
+  if (!confirm('Réinitialiser toutes les données ? (patients, assignations, horaires seront effacés)')) return;
+  localStorage.removeItem('roadmap_as_v1');
+  localStorage.removeItem('roadmap_db_v3');
+  localStorage.removeItem('roadmap_db');
+  location.reload();
+}
+
+function doLogin() {
+  const u = document.getElementById('l-u').value.trim();
+  const p = document.getElementById('l-p').value;
+  const user = DB.users.find(x => x.login===u && x.password===p);
+  if (!user) { document.getElementById('lerr').style.display='block'; return; }
+  document.getElementById('lerr').style.display='none';
+  CU = user;
+  showApp();
+}
+function doLogout() {
+  CU=null;
+  document.getElementById('s-app').classList.remove('on');
+  document.getElementById('s-login').style.display='flex';
+  ['l-u','l-p'].forEach(id=>document.getElementById(id).value='');
+  if(map){map.remove();map=null;}
+}
+function showApp() {
+  document.getElementById('s-login').style.display='none';
+  document.getElementById('s-app').classList.add('on');
+  const isAdmin = CU.role==='admin';
+  const tb = document.getElementById('tb-role');
+  tb.textContent = isAdmin ? 'Admin' : 'Aide soignant';
+  tb.style.cssText = isAdmin
+    ? 'background:rgba(232,121,249,.15);color:#e879f9;font-size:.6rem;font-weight:700;padding:2px 8px;border-radius:99px'
+    : 'background:var(--as-bg);color:var(--as);font-size:.6rem;font-weight:700;padding:2px 8px;border-radius:99px';
+  document.getElementById('tb-user').textContent = CU.name;
+  buildNav();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════════════════════
+function buildNav() {
+  const tabs = CU.role==='admin'
+    ? [['tournee','🗺 Tournées'],['planning','📅 Planning'],['patients','👤 Patients'],['users','👥 Aide soignants']]
+    : [['tournee','🗺 Ma tournée'],['planning','📅 Mon planning']];
+  document.getElementById('navtabs').innerHTML = tabs.map(([id,l],i) =>
+    `<div class="navtab${i===0?' active':''}" data-pane="${id}" onclick="switchPane('${id}')">${l}</div>`).join('');
+  document.getElementById('content').innerHTML = tabs.map(([id]) =>
+    `<div class="pane" data-pane="${id}" id="pane-${id}"></div>`).join('');
+  tabs.forEach(([id]) => buildPane(id));
+  switchPane(tabs[0][0]);
+}
+
+function switchPane(id) {
+  document.querySelectorAll('.navtab').forEach(t => t.classList.toggle('active', t.dataset.pane===id));
+  document.querySelectorAll('.pane').forEach(p => p.classList.toggle('active', p.dataset.pane===id));
+  if (id==='tournee') setTimeout(() => { initMap(); if(map) map.invalidateSize(); }, 60);
+}
+
+function buildPane(id) {
+  const el = document.getElementById(`pane-${id}`);
+  if (id==='tournee')  buildTourneePane(el);
+  if (id==='planning') buildPlanningPane(el);
+  if (id==='patients') buildPatientsPane(el);
+  if (id==='users')    buildUsersPane(el);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MAP
+// ═══════════════════════════════════════════════════════════════════════════
+function initMap() {
+  if (map) return;
+  map = L.map('map').setView([DB.depot?.lat||48.297, DB.depot?.lng||4.074], 13);
+  const street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19});
+  const sat    = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'© Esri',maxZoom:19});
+  street.addTo(map);
+  L.control.layers({'Plan':street,'Satellite':sat},{},{position:'topright'}).addTo(map);
+}
+function mkIcon(lbl, col, sq=false) {
+  const s=sq?34:30, r=sq?'9px':'50%';
+  return L.divIcon({className:'',
+    html:`<div class="mk${sq?' mk-sq':''}" style="width:${s}px;height:${s}px;background:${col};color:${col==='#4fffb0'?'#0d0f14':'#fff'};border-radius:${r}">${lbl}</div>`,
+    iconSize:[s,s],iconAnchor:[s/2,s/2],popupAnchor:[0,-s/2]});
+}
+function clearML() {
+  if(!map) return;
+  ML.r.forEach(l=>{ try{map.removeLayer(l);}catch(e){} });
+  ML.m.forEach(m=>{ try{map.removeLayer(m);}catch(e){} });
+  ML = {r:[], m:[], markerMap:{}, lastStops:null};
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// OSRM + CACHE
+// ═══════════════════════════════════════════════════════════════════════════
+const osrmCache = {};
+const geocodeCache = {};
+
+async function osrm(points) {
+  if (points.length < 2) return null;
+  const key = points.map(p=>`${p.lat.toFixed(4)},${p.lng.toFixed(4)}`).join('|');
+  if (osrmCache[key]) return osrmCache[key];
+  try {
+    const ctrl = new AbortController();
+    const tid  = setTimeout(()=>ctrl.abort(), 8000);
+    const r = await fetch(
+      `https://router.project-osrm.org/route/v1/driving/${points.map(p=>`${p.lng},${p.lat}`).join(';')}?overview=full&geometries=geojson`,
+      {signal:ctrl.signal}
+    );
+    clearTimeout(tid);
+    const d = await r.json();
+    if (!d.routes?.length) return null;
+    const rt = d.routes[0];
+    const res = {
+      geo: rt.geometry.coordinates.map(c=>[c[1],c[0]]),
+      legs: rt.legs.map(l=>({km:(l.distance/1000).toFixed(1), min:Math.round(l.duration/60)})),
+      totalKm:(rt.distance/1000).toFixed(1),
+      totalMin:Math.round(rt.duration/60)
+    };
+    osrmCache[key]=res; return res;
+  } catch { return null; }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ALGORITHM
+// ═══════════════════════════════════════════════════════════════════════════
+function toRad(d){return d*Math.PI/180;}
+function dist2(a,b){
+  const dx=(a.lng-b.lng)*Math.cos(toRad((a.lat+b.lat)/2))*111.32;
+  const dy=(a.lat-b.lat)*110.57;
+  return dx*dx+dy*dy;
+}
+function hav(a,b){
+  const R=6371,dLat=toRad(b.lat-a.lat),dLng=toRad(b.lng-a.lng);
+  const h=Math.sin(dLat/2)**2+Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLng/2)**2;
+  return 2*R*Math.asin(Math.sqrt(h));
+}
+function buildDM(nodes){
+  const n=nodes.length, m=new Float64Array(n*n);
+  for(let i=0;i<n;i++) for(let j=i+1;j<n;j++){const d=dist2(nodes[i],nodes[j]);m[i*n+j]=d;m[j*n+i]=d;}
+  return m;
+}
+function nn(nodes){
+  const n=nodes.length, m=buildDM(nodes), v=new Uint8Array(n), r=[0]; v[0]=1;
+  for(let s=1;s<n;s++){
+    const last=r[r.length-1],base=last*n; let best=-1,bd=Infinity;
+    for(let j=0;j<n;j++) if(!v[j]&&m[base+j]<bd){bd=m[base+j];best=j;}
+    r.push(best);v[best]=1;
+  }
+  return r;
+}
+function opt2(nodes,route){
+  const n=nodes.length, m=buildDM(nodes); let imp=true;
+  while(imp){imp=false;
+    for(let i=1;i<n-1&&!imp;i++){
+      const ri=route[i],ri1=route[i-1];
+      for(let j=i+1;j<n;j++){
+        const rj=route[j],rj1=route[(j+1)%n];
+        if(m[ri1*n+ri]+m[rj*n+rj1]>m[ri1*n+rj]+m[ri*n+rj1]+1e-10){
+          let l=i,r2=j; while(l<r2){const tmp=route[l];route[l]=route[r2];route[r2]=tmp;l++;r2--;}
+          imp=true;break;
+        }
+      }
+    }
+  }
+  return route;
+}
+function timeToMin(t){if(!t)return 0;const[h,m]=t.split(':').map(Number);return h*60+m;}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// TOURNÉE AIDE SOIGNANT
+// ═══════════════════════════════════════════════════════════════════════════
+function getAllTacheLabels(){return {...TACHE_LABELS,...TACHE_LABELS_EXTRA};}
+
+function getAdjustedHoraire(patientId, tache, defaut){
+  return DB.adjustments?.[CU.id]?.[patientId]?.[tache] || defaut;
+}
+
+function isAssigned(patientId){
+  if(CU.role==='admin') return true;
+  const a = DB.assignations?.[CU.id];
+  return (!a||a.length===0) ? true : a.includes(patientId);
+}
+
+function buildStops(jour) {
+  const pts = DB.patients.filter(p =>
+    p.besoins?.aide_soignant?.actif &&
+    (p.besoins.aide_soignant.jours||[]).includes(jour) &&
+    isAssigned(p.id)
+  );
+  if (!pts.length) return [];
+
+  const dep = {nom:DB.depot?.nom||'Cabinet', addr:DB.depot?.adresse||'', lat:DB.depot?.lat, lng:DB.depot?.lng, isDepot:true};
+
+  // ── 1. Collecter toutes les tâches avec horaire ───────────────────────────
+  const allTasks = [];
+  pts.forEach(p => {
+    const taches = p.besoins.aide_soignant.taches || {};
+    Object.entries(taches).forEach(([t,tv]) => {
+      if (!tv?.actif) return;
+      const h = getAdjustedHoraire(p.id, t, tv.horaire_defaut || TACHE_DEFAULTS[t] || '08:00');
+      allTasks.push({patient:p, tache:t, horaire:h, minH:timeToMin(h)});
+    });
+  });
+  if (!allTasks.length) return [dep];
+
+  // ── 2. Trier toutes les tâches par horaire (chrono strict) ───────────────
+  allTasks.sort((a,b) => a.minH - b.minH);
+
+  // ── 3. Regrouper les tâches du MÊME patient proches (≤ 30 min) → 1 stop ──
+  const groups = [];
+  allTasks.forEach(task => {
+    const g = groups.find(g =>
+      g.pid === task.patient.id && Math.abs(task.minH - g.minH) <= 30
+    );
+    if (g) { g.taches.push(task); if (task.minH < g.minH) g.minH = task.minH; }
+    else groups.push({pid:task.patient.id, patient:task.patient, taches:[task], minH:task.minH});
+  });
+
+  // ── 4. Re-trier les groupes par horaire (chrono strict) ──────────────────
+  groups.sort((a,b) => a.minH - b.minH);
+
+  // ── 5. Ordonner : chrono absolu, géographie seulement à égalité d'horaire ─
+  // Règle : Mme Dupont lever 07h00 AVANT M. Blanc lever 07h45, toujours.
+  // Exception : si deux patients ont exactement le même horaire, on prend le plus proche.
+  const ordered = [];
+  let i = 0;
+  while (i < groups.length) {
+    // Collecter tous les groupes au même horaire exact
+    const sameTime = [groups[i]];
+    let j = i + 1;
+    while (j < groups.length && groups[j].minH === groups[i].minH) {
+      sameTime.push(groups[j]);
+      j++;
+    }
+    if (sameTime.length === 1) {
+      // Horaire unique → position dans l'ordre, pas de choix géographique
+      ordered.push(sameTime[0]);
+    } else {
+      // Même horaire exact → trier par proximité depuis le dernier stop
+      const from = ordered.length > 0 ? ordered[ordered.length-1].patient : dep;
+      const rem = [...sameTime];
+      let cur = from;
+      while (rem.length > 0) {
+        let bestIdx = 0, bestD = Infinity;
+        rem.forEach((g, idx) => {
+          const d = dist2(cur, g.patient);
+          if (d < bestD) { bestD = d; bestIdx = idx; }
+        });
+        ordered.push(rem[bestIdx]);
+        cur = rem[bestIdx].patient;
+        rem.splice(bestIdx, 1);
+      }
+    }
+    i = j;
+  }
+
+  // ── 6. Construire les stops ───────────────────────────────────────────────
+  const result = [dep];
+  ordered.forEach(g => {
+    const tagHtml = g.taches
+      .sort((a,b) => a.minH - b.minH)
+      .map(({tache,horaire}) => {
+        const lbl = getAllTacheLabels()[tache] || tache;
+        return `<span class="tag" style="background:${AS_BG};color:${AS_COLOR}">${lbl} <b>${horaire}</b></span>`;
+      }).join('');
+    const firstH = g.taches[0].horaire;
+    // stopKey = identifiant unique par passage (un patient peut avoir matin ET soir)
+    const stopKey = `${g.patient.id}_${firstH.replace(':','')}`;
+    result.push({
+      nom:g.patient.nom, addr:g.patient.adresse,
+      lat:g.patient.lat, lng:g.patient.lng,
+      horaire:firstH, tags:tagHtml,
+      patientId:g.patient.id,
+      stopKey  // clé unique pour la case à cocher
+    });
+  });
+  return result;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PANE TOURNÉE
+// ═══════════════════════════════════════════════════════════════════════════
+function buildTourneePane(el) {
+  const asSelect = CU.role==='admin' ? `
+    <div class="field" style="margin-bottom:.6rem">
+      <label>Aide soignant</label>
+      <select id="t-as-sel" onchange="">
+        <option value="">— Tous les patients —</option>
+        ${DB.users.filter(u=>u.role==='aide_soignant').map(u=>`<option value="${u.id}">${u.name}</option>`).join('')}
+      </select>
+    </div>` : '';
+
+  el.innerHTML=`<div class="split">
+    <div class="sidebar">
+      <div class="sb-head">
+        ${asSelect}
+        <div style="margin-bottom:.6rem">
+          <div class="flbl" style="margin-bottom:4px">Jour de la semaine</div>
+          <div style="display:flex;gap:3px;flex-wrap:nowrap;overflow-x:auto" id="t-days"></div>
+        </div>
+        <div style="margin-bottom:.6rem">
+          <div class="flbl" style="margin-bottom:4px">Plage horaire (optionnel)</div>
+          <div class="plage-row">
+            <label>De</label>
+            <input type="time" id="t-plage-debut" value="${selPlage.debut}" onchange="selPlage.debut=this.value" placeholder="--:--">
+            <label>à</label>
+            <input type="time" id="t-plage-fin"   value="${selPlage.fin}"   onchange="selPlage.fin=this.value"   placeholder="--:--">
+            <button class="btn btn-xs" onclick="selPlage={debut:'',fin:''};document.getElementById('t-plage-debut').value='';document.getElementById('t-plage-fin').value=''" title="Réinitialiser">✕</button>
+          </div>
+        </div>
+        <button class="btn btn-p btn-full" onclick="loadTournee()">Calculer l'itinéraire →</button>
+        <div id="t-msg" class="smsg"></div>
+      </div>
+      <div class="stats-row" id="t-stats" style="display:none;grid-template-columns:repeat(3,1fr)"></div>
+      <div class="scroll-body" id="t-stops"></div>
+    </div>
+    <div class="map-wrap"><div id="map" style="width:100%;height:100%"></div></div>
+  </div>`;
+  renderDayTabs();
+}
+
+function renderDayTabs() {
+  const el=document.getElementById('t-days');if(!el)return;
+  el.innerHTML=JOURS_LABELS.slice(1).map((_,i)=>{
+    const n=i+1;
+    return`<button class="day-tab${selJour===n?' active':''}" onclick="selJour=${n};renderDayTabs()">${JOURS_LABELS[n]}</button>`;
+  }).join('');
+}
+
+async function loadTournee() {
+  const token=++_tourneeToken;
+  setMsg('t-msg','Calcul itinéraire GPS…','loading');
+  clearML();
+  if(!map) initMap();
+  setTimeout(()=>map&&map.invalidateSize(),50);
+
+  // Si admin a sélectionné un AS, on simule sa session pour le filtrage
+  let userId = CU.id;
+  if (CU.role==='admin') {
+    const sel = document.getElementById('t-as-sel')?.value;
+    if (sel) userId = sel;
+  }
+  const savedCU = CU;
+  if (userId!==CU.id) CU = DB.users.find(u=>u.id===userId)||CU;
+
+  const allStops = buildStops(selJour);
+  CU = savedCU;
+
+  // Appliquer le filtre plage horaire si défini
+  const debutMin = selPlage.debut ? timeToMin(selPlage.debut) : 0;
+  const finMin   = selPlage.fin   ? timeToMin(selPlage.fin)   : 24*60;
+  const stops = allStops.filter(s =>
+    s.isDepot ||
+    (timeToMin(s.horaire) >= debutMin && timeToMin(s.horaire) <= finMin)
+  );
+
+  const patStops = stops.filter(s=>!s.isDepot);
+  if (!patStops.length) {
+    setMsg('t-msg',`Aucun patient le ${JOURS_FULL[selJour]}`,'err');
+    document.getElementById('t-stats').style.display='none';
+    document.getElementById('t-stops').innerHTML='<div class="empty">Aucun arrêt ce jour-là</div>';
+    return;
+  }
+
+  // Appel OSRM
+  const routePts=[...stops, stops[0]];
+  const res=await osrm(routePts);
+  if(token!==_tourneeToken) return;
+
+  // Distances
+  if(res){
+    let li=0;
+    stops.forEach(s=>{if(!s.isDepot&&res.legs[li]) s._leg=res.legs[li++];});
+  } else {
+    stops.forEach((s,i)=>{
+      const nxt=stops[i+1]||stops[0];
+      const km=hav(s,nxt);
+      s._leg={km:km.toFixed(1),min:Math.round(km/0.45)};
+    });
+  }
+
+  const totalKm  = res?res.totalKm :stops.reduce((t,s)=>t+parseFloat(s._leg?.km||0),0).toFixed(1);
+  const totalMin = res?res.totalMin:stops.reduce((t,s)=>t+(s._leg?.min||0),0);
+
+  // Markers — indexés par stopKey (unique par passage)
+  // z-index inversé : stop 1 au-dessus de la pile, stop N en dessous
+  ML.markerMap = {};
+  const nextKey = getNextStopKey(); // prochain stop non fait (au 1er chargement = stops[1])
+  stops.forEach((s,i) => {
+    if (!s.lat || !s.lng) return;
+    if (s.isDepot) {
+      const m = L.marker([s.lat,s.lng], {icon:mkIcon('⌂','#4fffb0',true), zIndexOffset:9999})
+        .bindPopup(`<b>${s.nom}</b><br><small>${s.addr||''}</small>`)
+        .addTo(map);
+      ML.m.push(m);
+      return;
+    }
+    const isDone  = !!doneStops[s.stopKey];
+    const isNext  = s.stopKey === nextKey;
+    const col     = isDone ? '#3a3d4a' : isNext ? '#4fffb0' : AS_COLOR;
+    const textCol = isDone ? '#8b90a0' : (isNext ? '#0d0f14' : '#fff');
+    const lbl     = isDone ? '✓' : String(i);
+    const zOff    = isDone ? -200 : isNext ? 500 : Math.max(0, 1000 - i * 10);
+    const outline = isNext ? ';outline:2px solid #4fffb0;outline-offset:2px' : '';
+
+    const m = L.marker([s.lat,s.lng], {
+      icon: L.divIcon({
+        className:'',
+        html:`<div style="width:30px;height:30px;border-radius:50%;background:${col};color:${textCol};display:flex;align-items:center;justify-content:center;font-size:${isDone?13:11}px;font-weight:900;border:2px solid rgba(255,255,255,${isDone?.06:.18});box-shadow:0 2px 8px rgba(0,0,0,.5)${outline}">  ${lbl}</div>`,
+        iconSize:[30,30], iconAnchor:[15,15], popupAnchor:[0,-15]
+      }),
+      interactive: !isDone,
+      zIndexOffset: zOff
+    });
+    if (!isDone) {
+      m.bindPopup(`<b>${s.nom}</b><br><small>${s.addr||''}</small><br><small style="color:${col}">RDV ${s.horaire}</small>`);
+    }
+    m.addTo(map);
+    ML.m.push(m);
+    ML.markerMap[s.stopKey] = { marker:m, stop:s, stopNum:i };
+  });
+
+  // Sauvegarder pour refreshRoute()
+  ML.lastStops = stops;
+
+  // Fitbounds d'abord avec les coordonnées des stops
+  const validPts = stops.filter(s=>s.lat&&s.lng).map(s=>[s.lat,s.lng]);
+  if (validPts.length > 1) map.fitBounds(validPts, {padding:[50,50]});
+
+  // Tracé segmenté (vert=prochain, gris=fait, violet=à venir)
+  await refreshRoute();
+
+  // Stats
+  const sEl=document.getElementById('t-stats');sEl.style.display='grid';
+  sEl.innerHTML=`
+    <div class="scard"><div class="sval" style="color:${AS_COLOR}">${patStops.length}</div><div class="slbl">Patients</div></div>
+    <div class="scard"><div class="sval" style="color:${AS_COLOR}">${totalKm}</div><div class="slbl">km route</div></div>
+    <div class="scard"><div class="sval" style="color:${AS_COLOR}">${totalMin}</div><div class="slbl">min trajet</div></div>`;
+
+  // Liste
+  document.getElementById('t-stops').innerHTML=stops.map((s,i)=>{
+    const col=s.isDepot?'#4fffb0':AS_COLOR;
+    const canAdj=!s.isDepot&&CU.role!=='admin';
+    const isDone=!s.isDepot&&!!doneStops[s.stopKey];
+    const domId=s.isDepot?'stop-depot':`stop-${s.stopKey}`;
+    return`<div class="rstop${s.isDepot?' dep':''}${isDone?' done':''}" id="${domId}" onclick="${map&&s.lat?`map.panTo([${s.lat},${s.lng}])`:''}">
+      ${!s.isDepot?`<div class="done-check${isDone?' checked':''}" title="Marquer comme fait" onclick="event.stopPropagation();toggleDone('${s.stopKey}')"></div>`:''}
+      <div class="snum" style="background:${s.isDepot?'rgba(79,255,176,.12)':AS_BG};color:${col}">${s.isDepot?'⌂':i}</div>
+      <div class="sinfo">
+        <div class="sname">
+          ${s.nom}
+          ${s.isDepot?'<span class="tag" style="background:rgba(79,255,176,.12);color:#4fffb0">DÉPART</span>':''}
+          ${s.horaire&&!s.isDepot?`<span class="horaire-badge">${s.horaire}</span>`:''}
+        </div>
+        <div class="saddr">${s.addr||''}</div>
+        ${s.tags?`<div class="ptags">${s.tags}${canAdj?`<button class="btn btn-xs" style="background:rgba(250,204,21,.1);color:var(--warn);border-color:rgba(250,204,21,.2)" onclick="event.stopPropagation();openAdjust('${s.patientId}')">✏ Ajuster</button>`:''}</div>`:''}
+        ${s._leg?`<div class="sdist"><span>${s._leg.km} km</span><span class="dur">⏱ ${s._leg.min} min</span></div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+  setMsg('t-msg',res?'':`GPS indisponible — distances approx.`,res?'':'err');
+  if(!res) setTimeout(()=>setMsg('t-msg','',''),4000);
+
+  // Mettre en évidence le prochain stop
+  highlightNextStop();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// AJUSTER HORAIRES (AS uniquement)
+// ═══════════════════════════════════════════════════════════════════════════
+function openAdjust(patientId){
+  const p=DB.patients.find(x=>x.id===patientId);if(!p)return;
+  adjData={patientId};
+  document.getElementById('madj-title').textContent=`Mes horaires — ${p.nom}`;
+  const taches=p.besoins?.aide_soignant?.taches||{};
+  const userAdj=DB.adjustments?.[CU.id]?.[patientId]||{};
+  document.getElementById('madj-body').innerHTML=
+    Object.entries(taches).filter(([,v])=>v?.actif).map(([t,v])=>{
+      const lbl=getAllTacheLabels()[t]||t;
+      const def=v.horaire_defaut||TACHE_DEFAULTS[t]||'08:00';
+      const cur=userAdj[t]||def;
+      return`<div style="display:flex;align-items:center;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid var(--border)">
+        <div>
+          <div style="font-size:.8rem;font-weight:600">${lbl}</div>
+          <div style="font-size:.63rem;color:var(--t3)">Horaire admin : ${def}</div>
+        </div>
+        <input type="time" id="adj-${t}" value="${cur}" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);padding:.3rem .5rem;font-size:.82rem;outline:none;">
+      </div>`;
+    }).join('');
+  openM('m-adjust');
+}
+function saveAdjust(){
+  if(!adjData) return;
+  const {patientId}=adjData;
+  const p=DB.patients.find(x=>x.id===patientId);if(!p)return;
+  if(!DB.adjustments[CU.id]) DB.adjustments[CU.id]={};
+  if(!DB.adjustments[CU.id][patientId]) DB.adjustments[CU.id][patientId]={};
+  const taches=p.besoins?.aide_soignant?.taches||{};
+  Object.keys(taches).filter(t=>taches[t]?.actif).forEach(t=>{
+    const el=document.getElementById(`adj-${t}`);
+    if(el) DB.adjustments[CU.id][patientId][t]=el.value;
+  });
+  saveDB();closeM('m-adjust');loadTournee();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PANE PLANNING
+// ═══════════════════════════════════════════════════════════════════════════
+function buildPlanningPane(el){
+  el.innerHTML=`<div style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+    <div style="display:flex;background:var(--bg2);border-bottom:1px solid var(--border);padding:.5rem .875rem;gap:5px;flex-shrink:0">
+      <button class="btn btn-sm btn-p" data-pt="semaine" onclick="switchPlanTab('semaine',this)">📆 Semaine</button>
+      <button class="btn btn-sm" data-pt="patient" onclick="switchPlanTab('patient',this)">🏠 Par patient</button>
+      ${CU.role==='admin'?`<button class="btn btn-sm" data-pt="equipe" onclick="switchPlanTab('equipe',this)">👥 Par AS</button>`:''}
+    </div>
+    <div id="plan-content" style="flex:1;overflow:auto"></div>
+  </div>`;
+  switchPlanTab('semaine', el.querySelector('[data-pt]'));
+}
+function switchPlanTab(id,btn){
+  document.querySelectorAll('[data-pt]').forEach(b=>{b.classList.remove('btn-p');});
+  if(btn) btn.classList.add('btn-p');
+  const el=document.getElementById('plan-content');
+  el.innerHTML='';
+  const wrap=document.createElement('div');
+  wrap.style.cssText='padding:.875rem;';
+  el.appendChild(wrap);
+  if(id==='semaine') renderSemaine(wrap);
+  if(id==='patient') renderPlanPatient(wrap);
+  if(id==='equipe')  renderPlanEquipe(wrap);
+}
+
+function renderSemaine(el){
+  // Filtrer les patients selon le contexte (admin voit tous, AS voit ses assignés)
+  const pts = DB.patients.filter(p =>
+    p.besoins?.aide_soignant?.actif && isAssigned(p.id)
+  );
+  el.innerHTML=`<div style="font-size:.88rem;font-weight:700;margin-bottom:.75rem">Planning semaine — Aide soignant</div>
+  <div style="overflow-x:auto">
+  <table style="width:100%;border-collapse:collapse;min-width:650px">
+    <thead><tr>
+      <th style="padding:.4rem .5rem;background:var(--bg3);border:1px solid var(--border);font-size:.6rem;color:var(--t3);text-align:left;width:130px">Patient</th>
+      ${JOURS_LABELS.slice(1).map((j,i)=>{
+        const isToday=i+1===getTodayNum();
+        return`<th style="padding:.35rem .3rem;background:${isToday?AS_BG:'var(--bg3)'};border:1px solid var(--border);font-size:.6rem;color:${isToday?AS_COLOR:'var(--t3)'};text-align:center">${j}${isToday?'<br><span style="font-size:.5rem">Auj.</span>':''}</th>`;
+      }).join('')}
+    </tr></thead>
+    <tbody>
+    ${pts.map(p=>{
+      const taches=p.besoins.aide_soignant.taches||{};
+      const activeTaches=Object.entries(taches).filter(([,v])=>v?.actif);
+      return activeTaches.map(([t,tv],ti)=>{
+        const lbl=getAllTacheLabels()[t]||t;
+        return`<tr>
+          <td style="padding:.3rem .5rem;border:1px solid var(--border);background:var(--bg2);font-size:.72rem">
+            ${ti===0?`<b>${p.nom}</b><br>`:''}<span style="color:var(--as);font-size:.65rem">${lbl}</span>
+          </td>
+          ${Array.from({length:7},(_,i)=>{
+            const j=i+1;
+            const has=(p.besoins.aide_soignant.jours||[]).includes(j);
+            const h=has?getAdjustedHoraire(p.id,t,tv.horaire_defaut||TACHE_DEFAULTS[t]||'--:--'):'';
+            return has
+              ?`<td style="padding:.25rem .2rem;border:1px solid var(--border);text-align:center;background:${AS_BG}"><span style="font-size:.65rem;font-weight:700;color:${AS_COLOR}">${h}</span></td>`
+              :`<td style="padding:.25rem .2rem;border:1px solid var(--border);text-align:center;color:var(--t3);font-size:.58rem">—</td>`;
+          }).join('')}
+        </tr>`;
+      }).join('');
+    }).join('')}
+    </tbody>
+  </table></div>`;
+}
+
+function renderPlanPatient(el){
+  const pts=DB.patients.filter(p=>p.besoins?.aide_soignant?.actif&&isAssigned(p.id));
+  el.innerHTML=`<div style="font-size:.88rem;font-weight:700;margin-bottom:.75rem">Planning par patient</div>
+  ${pts.map(p=>{
+    const taches=p.besoins.aide_soignant.taches||{};
+    const jours=(p.besoins.aide_soignant.jours||[]);
+    return`<div class="card" style="margin-bottom:.65rem">
+      <div style="display:flex;align-items:baseline;gap:.5rem;margin-bottom:.5rem">
+        <b style="font-size:.85rem">${p.nom}</b>
+        <span style="font-size:.65rem;color:var(--t2);font-family:monospace">${p.adresse}</span>
+      </div>
+      <div style="display:flex;gap:3px;margin-bottom:.5rem;flex-wrap:wrap">
+        ${JOURS_LABELS.slice(1).map((_,i)=>{const n=i+1;return`<span class="jour-btn${jours.includes(n)?' on':''}" style="cursor:default">${JOURS_LABELS[n]}</span>`;}).join('')}
+      </div>
+      ${Object.entries(taches).filter(([,v])=>v?.actif).map(([t,v])=>{
+        const lbl=getAllTacheLabels()[t]||t;
+        const h=v.horaire_defaut||TACHE_DEFAULTS[t]||'--:--';
+        return`<div style="display:flex;align-items:center;justify-content:space-between;padding:.25rem .3rem;border-bottom:1px solid var(--border);font-size:.75rem">
+          <span style="color:${AS_COLOR};font-weight:600">${lbl}</span>
+          <span class="horaire-badge">${h}</span>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('')||'<div class="empty">Aucun patient assigné</div>'}`;
+}
+
+function renderPlanEquipe(el){
+  const asUsers=DB.users.filter(u=>u.role==='aide_soignant');
+  el.innerHTML=`<div style="font-size:.88rem;font-weight:700;margin-bottom:.75rem">Planning par aide soignant</div>
+  ${asUsers.map(u=>{
+    const assigned=DB.assignations?.[u.id]||[];
+    const pts=DB.patients.filter(p=>p.besoins?.aide_soignant?.actif&&(assigned.length===0||assigned.includes(p.id)));
+    return`<div class="card" style="margin-bottom:.75rem">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem">
+        <div>
+          <span class="badge" style="background:${AS_BG};color:${AS_COLOR};margin-right:.4rem">Aide soignant</span>
+          <b>${u.name}</b>
+        </div>
+        <span style="font-size:.7rem;color:var(--t2)">${pts.length} patient(s)</span>
+      </div>
+      <div class="plan-grid">
+        ${JOURS_LABELS.slice(1).map((_,i)=>{
+          const j=i+1;
+          const dayPts=pts.filter(p=>(p.besoins.aide_soignant.jours||[]).includes(j));
+          return`<div class="plan-day">
+            <div class="plan-day-title">${JOURS_LABELS[j]}</div>
+            ${dayPts.map(p=>`<div class="plan-slot" title="${p.nom}">${p.nom.replace(/^(Mme?\s+|M\.\s+)/i,'').split(' ')[0]}</div>`).join('')}
+            ${!dayPts.length?`<div style="font-size:.55rem;color:var(--t3);text-align:center">—</div>`:''}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('')||'<div class="empty">Aucun aide soignant</div>'}`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PANE PATIENTS (admin uniquement)
+// ═══════════════════════════════════════════════════════════════════════════
+function buildPatientsPane(el){
+  el.innerHTML=`<div style="display:flex;flex-direction:column;flex:1;overflow:hidden;padding:.875rem">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-shrink:0">
+      <div><div style="font-size:.95rem;font-weight:700">Patients</div><div style="font-size:.68rem;color:var(--t3)" id="pat-count"></div></div>
+      <div style="display:flex;gap:.4rem">
+        <button class="btn btn-info btn-sm" onclick="openM('m-csv')">⬆ Import CSV</button>
+        <button class="btn btn-p btn-sm" onclick="openNewPatient()">+ Nouveau</button>
+      </div>
+    </div>
+    <div class="twrap scroll-body"><div id="pat-tbl"></div></div>
+  </div>`;
+  renderPatientsTable();
+}
+function renderPatientsTable(){
+  const el=document.getElementById('pat-tbl'),cnt=document.getElementById('pat-count');
+  if(!el) return;
+  cnt&&(cnt.textContent=`${DB.patients.length} patient(s)`);
+  if(!DB.patients.length){el.innerHTML='<div class="empty">Aucun patient. Ajoutez-en ou importez un CSV.</div>';return;}
+  el.innerHTML=`<table class="tbl">
+    <thead><tr><th>Patient</th><th>Adresse</th><th>Jours</th><th>Tâches</th><th></th></tr></thead>
+    <tbody>${DB.patients.map(p=>{
+      const b=p.besoins?.aide_soignant;
+      const jours=(b?.jours||[]).map(j=>JOURS_LABELS[j]).join(', ');
+      const taches=Object.entries(b?.taches||{}).filter(([,v])=>v?.actif)
+        .map(([t])=>`<span class="tag" style="background:${AS_BG};color:${AS_COLOR}">${getAllTacheLabels()[t]||t}</span>`).join('');
+      return`<tr>
+        <td><b>${p.nom}</b></td>
+        <td style="font-family:monospace;font-size:.68rem;color:var(--t2)">${p.adresse}</td>
+        <td style="font-size:.68rem;color:var(--t2)">${jours||'—'}</td>
+        <td><div style="display:flex;flex-wrap:wrap;gap:2px">${taches||'—'}</div></td>
+        <td style="text-align:right;white-space:nowrap">
+          <button class="btn btn-sm" onclick="editPatient('${p.id}')">✏</button>
+          <button class="btn btn-d btn-sm" onclick="delPatient('${p.id}')">✕</button>
+        </td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table>`;
+}
+
+// ─── MODAL PATIENT ────────────────────────────────────────────────────────
+function renderTachesList(taches={}) {
+  const allDefs = {...TACHE_DEFAULTS, ...Object.fromEntries(Object.keys(TACHE_LABELS_EXTRA).map(k=>[k,'09:00']))};
+  // Fusionner avec les tâches existantes du patient
+  const merged = {...allDefs};
+  Object.keys(taches).forEach(k=>{ if(!merged[k]) merged[k]='09:00'; });
+
+  document.getElementById('mp-taches').innerHTML = Object.entries(merged).map(([t,defH])=>{
+    const tv=taches[t];
+    const lbl=getAllTacheLabels()[t]||t;
+    const h=tv?.horaire_defaut||defH;
+    const actif=tv?.actif??false;
+    return tacheRowHTML(t, lbl, h, actif);
+  }).join('');
+}
+function tacheRowHTML(t, label, h, actif){
+  const isCustom=!TACHE_DEFAULTS[t];
+  return`<div class="tache-row" id="tr-${t}">
+    <label style="display:flex;align-items:center;gap:.5rem;font-size:.8rem;cursor:pointer;font-weight:600;flex:1">
+      <input type="checkbox" id="bp-t-${t}" ${actif?'checked':''} style="accent-color:${AS_COLOR};width:14px;height:14px"> ${label}
+    </label>
+    <div style="display:flex;align-items:center;gap:.4rem">
+      <input type="time" id="bp-th-${t}" value="${h}"
+        style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);padding:.28rem .5rem;font-size:.8rem;font-family:inherit;outline:none;width:98px">
+      ${isCustom?`<button class="btn btn-d btn-xs" onclick="removeCustomTache('${t}')">✕</button>`:''}
+    </div>
+  </div>`;
+}
+function addCustomTache(){
+  const name=prompt('Nom de la tâche (ex: Pansement, Perfusion, Injection…) :');
+  if(!name?.trim()) return;
+  const key='custom_'+(++_customTacheCount);
+  TACHE_LABELS_EXTRA[key]=name.trim();
+  const list=document.getElementById('mp-taches');
+  if(list){ const d=document.createElement('div'); d.innerHTML=tacheRowHTML(key,name.trim(),'09:00',true); list.appendChild(d.firstElementChild); }
+}
+function removeCustomTache(t){ document.getElementById(`tr-${t}`)?.remove(); delete TACHE_LABELS_EXTRA[t]; }
+
+function openNewPatient(){
+  editPid=null;
+  document.getElementById('mp-title').textContent='Nouveau patient';
+  ['mp-nom','mp-rue','mp-cp','mp-ville'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('mp-jours').innerHTML=joursSelHTML([1,2,3,4,5,6,7]);
+  renderTachesList();
+  setMsg('mp-geo','','');
+  openM('m-patient');
+}
+function editPatient(id){
+  editPid=id;
+  const p=DB.patients.find(x=>x.id===id);if(!p)return;
+  document.getElementById('mp-title').textContent='Modifier — '+p.nom;
+  const parts=p.adresse.split(', ');
+  document.getElementById('mp-nom').value=p.nom;
+  document.getElementById('mp-rue').value=parts[0]||'';
+  const last=parts[parts.length-1]||'';
+  const m=last.match(/^(\d{5})\s(.+)$/);
+  document.getElementById('mp-cp').value=m?m[1]:'';
+  document.getElementById('mp-ville').value=m?m[2]:last;
+  const b=p.besoins?.aide_soignant;
+  document.getElementById('mp-jours').innerHTML=joursSelHTML(b?.jours||[1,2,3,4,5,6,7]);
+  renderTachesList(b?.taches||{});
+  setMsg('mp-geo','','');
+  openM('m-patient');
+}
+async function savePatient(){
+  const nom=document.getElementById('mp-nom').value.trim();
+  const rue=document.getElementById('mp-rue').value.trim();
+  const cp=document.getElementById('mp-cp').value.trim();
+  const ville=document.getElementById('mp-ville').value.trim();
+  if(!nom||!rue){setMsg('mp-geo','Nom et adresse requis','err');return;}
+  const addr=`${rue}, ${cp} ${ville}`.replace(/,\s*$/,'');
+  setMsg('mp-geo','Géocodage…','loading');
+  const c=await geocode(addr);
+  const lat=c?c.lat:48.29+(Math.random()-.5)*.04;
+  const lng=c?c.lng:4.07+(Math.random()-.5)*.06;
+  if(c) setMsg('mp-geo',`✓ (${lat.toFixed(4)}, ${lng.toFixed(4)})`,'ok');
+  else  setMsg('mp-geo','Position approx.','err');
+  const jours=getJoursSel('mp-jours');
+  const taches={};
+  document.querySelectorAll('#mp-taches [id^="bp-t-"]').forEach(chk=>{
+    const t=chk.id.replace('bp-t-','');
+    const h=document.getElementById(`bp-th-${t}`)?.value||TACHE_DEFAULTS[t]||'09:00';
+    const lbl=getAllTacheLabels()[t]||t;
+    taches[t]={actif:chk.checked,horaire_defaut:h,label:lbl};
+  });
+  const besoins={aide_soignant:{actif:true,jours,taches}};
+  if(editPid){const i=DB.patients.findIndex(x=>x.id===editPid);DB.patients[i]={...DB.patients[i],nom,adresse:addr,lat,lng,besoins};}
+  else DB.patients.push({id:'p'+Date.now(),nom,adresse:addr,lat,lng,besoins});
+  saveDB();closeM('m-patient');renderPatientsTable();
+}
+function delPatient(id){if(!confirm('Supprimer ce patient ?'))return;DB.patients=DB.patients.filter(p=>p.id!==id);saveDB();renderPatientsTable();}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PANE UTILISATEURS (admin uniquement — AS seulement)
+// ═══════════════════════════════════════════════════════════════════════════
+function buildUsersPane(el){
+  el.innerHTML=`<div style="display:flex;flex-direction:column;flex:1;overflow:hidden;padding:.875rem">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-shrink:0">
+      <div><div style="font-size:.95rem;font-weight:700">Aide soignants</div><div style="font-size:.68rem;color:var(--t3)" id="usr-count"></div></div>
+      <button class="btn btn-p btn-sm" onclick="openNewUser()">+ Nouveau</button>
+    </div>
+    <div class="twrap scroll-body"><div id="usr-tbl"></div></div>
+  </div>`;
+  renderUsersTable();
+}
+function renderUsersTable(){
+  const el=document.getElementById('usr-tbl');if(!el)return;
+  const asUsers=DB.users.filter(u=>u.role==='aide_soignant');
+  document.getElementById('usr-count')&&(document.getElementById('usr-count').textContent=`${asUsers.length} aide(s) soignant(e)(s)`);
+  el.innerHTML=`<table class="tbl">
+    <thead><tr><th>Nom</th><th>Login</th><th>Patients assignés</th><th></th></tr></thead>
+    <tbody>${asUsers.map(u=>{
+      const assigned=DB.assignations?.[u.id]||[];
+      const nb=assigned.length;
+      const preview=assigned.slice(0,4).map(pid=>{
+        const p=DB.patients.find(x=>x.id===pid);
+        return p?`<span class="tag" style="background:${AS_BG};color:${AS_COLOR}">${p.nom.replace(/^(Mme?\s+|M\.\s+)/i,'').split(' ')[0]}</span>`:'';
+      }).join('');
+      return`<tr>
+        <td><b>${u.name}</b></td>
+        <td style="font-family:monospace;font-size:.73rem">${u.login}</td>
+        <td>
+          <div style="display:flex;flex-wrap:wrap;gap:2px;align-items:center">
+            ${nb===0?`<span style="font-size:.65rem;color:var(--t3)">Tous (non filtré)</span>`:preview}
+            ${nb>4?`<span style="font-size:.6rem;color:var(--t3)">+${nb-4}</span>`:''}
+          </div>
+        </td>
+        <td style="text-align:right;white-space:nowrap">
+          <button class="btn btn-info btn-sm" onclick="openAssign('${u.id}')">👤 Patients</button>
+          <button class="btn btn-sm" onclick="editUser('${u.id}')">✏</button>
+          ${u.id!==CU.id?`<button class="btn btn-d btn-sm" onclick="delUser('${u.id}')">✕</button>`:''}
+        </td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table>`;
+}
+function openNewUser(){
+  editUid=null;
+  ['mu-nom','mu-login','mu-pass'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('mu-title').textContent='Nouvel aide soignant';
+  openM('m-user');
+}
+function editUser(id){
+  editUid=id;
+  const u=DB.users.find(x=>x.id===id);if(!u)return;
+  document.getElementById('mu-title').textContent='Modifier — '+u.name;
+  document.getElementById('mu-nom').value=u.name;
+  document.getElementById('mu-login').value=u.login;
+  document.getElementById('mu-pass').value=u.password;
+  openM('m-user');
+}
+function saveUser(){
+  const name=document.getElementById('mu-nom').value.trim();
+  const login=document.getElementById('mu-login').value.trim();
+  const password=document.getElementById('mu-pass').value;
+  if(!name||!login||!password){alert('Tous les champs sont requis');return;}
+  if(editUid){const i=DB.users.findIndex(u=>u.id===editUid);DB.users[i]={...DB.users[i],name,login,password};}
+  else DB.users.push({id:'u'+Date.now(),name,login,password,role:'aide_soignant'});
+  saveDB();closeM('m-user');renderUsersTable();
+}
+function delUser(id){
+  if(!confirm('Supprimer cet aide soignant ?'))return;
+  DB.users=DB.users.filter(u=>u.id!==id);
+  if(DB.assignations) delete DB.assignations[id];
+  saveDB();renderUsersTable();
+}
+
+// ─── ASSIGNATION PATIENTS ─────────────────────────────────────────────────
+function openAssign(userId){
+  assignUid=userId;
+  const u=DB.users.find(x=>x.id===userId);if(!u)return;
+  if(!DB.assignations) DB.assignations={};
+  const assigned=DB.assignations[userId]||[];
+  const pts=DB.patients.filter(p=>p.besoins?.aide_soignant?.actif);
+  document.getElementById('massign-title').textContent=`Patients de ${u.name}`;
+  document.getElementById('massign-body').innerHTML=`
+    <div style="font-size:.75rem;color:var(--t2);margin-bottom:.65rem">
+      Patients cochés = assignés à <b style="color:${AS_COLOR}">${u.name}</b>.
+      Si aucun coché, le praticien voit tous les patients.
+    </div>
+    <div style="display:flex;gap:.4rem;margin-bottom:.5rem">
+      <button class="btn btn-xs" onclick="toggleAllAssign(true)">Tout cocher</button>
+      <button class="btn btn-xs" onclick="toggleAllAssign(false)">Tout décocher</button>
+    </div>
+    <div style="max-height:380px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--rs)">
+      ${!pts.length?'<div class="empty">Aucun patient</div>':pts.map(p=>`
+      <label style="display:flex;align-items:center;gap:.6rem;padding:.5rem .65rem;border-bottom:1px solid var(--border);cursor:pointer;font-size:.78rem">
+        <input type="checkbox" class="assign-chk" data-pid="${p.id}" ${assigned.includes(p.id)?'checked':''}
+          style="accent-color:${AS_COLOR};width:15px;height:15px;cursor:pointer;flex-shrink:0">
+        <div>
+          <div style="font-weight:700">${p.nom}</div>
+          <div style="font-size:.63rem;color:var(--t2);font-family:monospace">${p.adresse}</div>
+        </div>
+      </label>`).join('')}
+    </div>`;
+  openM('m-assign');
+}
+function toggleAllAssign(state){ document.querySelectorAll('.assign-chk').forEach(c=>c.checked=state); }
+function saveAssign(){
+  if(!assignUid) return;
+  if(!DB.assignations) DB.assignations={};
+  DB.assignations[assignUid]=[...document.querySelectorAll('.assign-chk:checked')].map(c=>c.dataset.pid);
+  saveDB();closeM('m-assign');renderUsersTable();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CSV IMPORT
+// ═══════════════════════════════════════════════════════════════════════════
+function splitCSVLine(line){
+  const fields=[];let cur='',inQ=false;
+  for(let i=0;i<line.length;i++){
+    const c=line[i];
+    if(c==='"'){ if(inQ&&line[i+1]==='"'){cur+='"';i++;} else inQ=!inQ; }
+    else if(c===','&&!inQ){fields.push(cur.trim());cur='';}
+    else cur+=c;
+  }
+  fields.push(cur.trim());return fields;
+}
+function parseCSV(text){
+  const lines=text.trim().replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n');
+  const hdrs=splitCSVLine(lines[0]).map(h=>h.replace(/"/g,'').trim());
+  const get=(vals,h,def='')=>{const i=hdrs.indexOf(h);return i>=0?(vals[i]||def).replace(/^"|"$/g,'').trim():def;};
+  const parseJours=s=>s.replace(/^"|"$/g,'').split(',').map(x=>parseInt(x.trim())).filter(n=>!isNaN(n)&&n>=1&&n<=7);
+  return lines.slice(1).filter(l=>l.trim()).map((line,li)=>{
+    const vals=splitCSVLine(line);
+    const nom=get(vals,'nom'),rue=get(vals,'rue'),cp=get(vals,'cp'),ville=get(vals,'ville');
+    if(!nom||!rue) throw new Error(`Ligne ${li+2} invalide`);
+    const jours=parseJours(get(vals,'jours','1,2,3,4,5,6,7'));
+    const taches={};
+    get(vals,'taches','').split(';').filter(Boolean).forEach(item=>{
+      const sep=item.indexOf('|')>=0?item.indexOf('|'):item.indexOf(':');
+      const t=item.substring(0,sep).trim();
+      const h=item.substring(sep+1).trim();
+      if(t) taches[t]={actif:true,horaire_defaut:h||TACHE_DEFAULTS[t]||'08:00'};
+    });
+    const besoins={aide_soignant:{actif:true,jours,taches}};
+    return{id:'p'+Date.now()+'_'+li+'_'+Math.floor(Math.random()*9999),nom,adresse:`${rue}, ${cp} ${ville}`,lat:null,lng:null,besoins};
+  });
+}
+function previewCSV(){
+  const file=document.getElementById('csv-file').files[0];
+  if(!file){setMsg('csv-msg','Sélectionnez un fichier','err');return;}
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      csvParsed=parseCSV(e.target.result);
+      const prev=document.getElementById('csv-prev');prev.style.display='block';
+      prev.textContent=csvParsed.map(p=>`• ${p.nom} — ${p.adresse}`).join('\n');
+      document.getElementById('csv-do').style.display='inline-flex';
+      setMsg('csv-msg',`${csvParsed.length} patient(s) prêts à importer`,'ok');
+    }catch(err){setMsg('csv-msg','Erreur : '+err.message,'err');}
+  };
+  r.readAsText(file,'UTF-8');
+}
+async function importCSV(){
+  if(!csvParsed.length) return;
+  const total=csvParsed.length;
+  setMsg('csv-msg',`Géocodage 0/${total}…`,'loading');
+  const BATCH=5;
+  for(let i=0;i<csvParsed.length;i+=BATCH){
+    const batch=csvParsed.slice(i,i+BATCH);
+    await Promise.all(batch.map(async p=>{
+      const c=await geocode(p.adresse);
+      p.lat=c?c.lat:48.29+(Math.random()-.5)*.04;
+      p.lng=c?c.lng:4.07+(Math.random()-.5)*.06;
+      p.id='p'+Date.now()+'_'+Math.floor(Math.random()*99999);
+    }));
+    setMsg('csv-msg',`Géocodage ${Math.min(i+BATCH,total)}/${total}…`,'loading');
+    if(i+BATCH<csvParsed.length) await new Promise(r=>setTimeout(r,1100));
+  }
+  DB.patients.push(...csvParsed);
+  saveDB();
+  setMsg('csv-msg',`✓ ${total} patient(s) importés`,'ok');
+  csvParsed=[];document.getElementById('csv-do').style.display='none';
+  setTimeout(()=>{closeM('m-csv');renderPatientsTable();},1000);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GÉOCODAGE
+// ═══════════════════════════════════════════════════════════════════════════
+async function geocode(addr){
+  if(geocodeCache[addr]) return geocodeCache[addr];
+  try{
+    const ctrl=new AbortController(),tid=setTimeout(()=>ctrl.abort(),4000);
+    const r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addr)}&limit=1`,
+      {headers:{'User-Agent':'RoadmapSoins/1.0'},signal:ctrl.signal});
+    clearTimeout(tid);
+    const d=await r.json();
+    const res=d.length?{lat:parseFloat(d[0].lat),lng:parseFloat(d[0].lon)}:null;
+    if(res) geocodeCache[addr]=res;
+    return res;
+  }catch{return null;}
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════════════════════
+function joursSelHTML(actifs=[]){
+  return JOURS_LABELS.slice(1).map((_,i)=>{
+    const n=i+1;
+    return`<div class="jour-btn${actifs.includes(n)?' on':''}" onclick="this.classList.toggle('on')" data-jour="${n}">${JOURS_LABELS[n]}</div>`;
+  }).join('');
+}
+function getJoursSel(id){
+  return[...document.querySelectorAll(`#${id} .jour-btn.on`)].map(el=>+el.dataset.jour);
+}
+function openM(id){document.getElementById(id).classList.add('open');}
+function closeM(id){document.getElementById(id).classList.remove('open');}
+function setMsg(id,msg,type){const el=document.getElementById(id);if(!el)return;el.textContent=msg;el.className=`smsg${type?' '+type:''}`;}
+document.querySelectorAll('.mbg').forEach(bg=>bg.addEventListener('click',e=>{if(e.target===bg)bg.classList.remove('open');}));
+
+// ═══════════════════════════════════════════════════════════════════════════
+// START
+// ═══════════════════════════════════════════════════════════════════════════
+init();
+</script>
+</body>
+</html>

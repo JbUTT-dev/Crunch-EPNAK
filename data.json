@@ -1,0 +1,166 @@
+{
+  "users": [
+    { "id": "u1", "login": "admin",          "password": "admin123", "role": "admin",         "name": "Administrateur" },
+    { "id": "u2", "login": "infirmiere1",     "password": "pass123",  "role": "infirmiere",    "name": "Sophie Renard" },
+    { "id": "u3", "login": "aidesoignant1",   "password": "pass123",  "role": "aide_soignant", "name": "Marc Duval" },
+    { "id": "u4", "login": "kine1",           "password": "pass123",  "role": "kine",          "name": "Julie Blanc" },
+    { "id": "u5", "login": "livreur1",        "password": "pass123",  "role": "livreur_repas", "name": "Ahmed Sidi" },
+    { "id": "u6", "login": "blanchisserie1",  "password": "pass123",  "role": "blanchisserie", "name": "Carole Petit" }
+  ],
+
+  "depot": {
+    "nom": "Cabinet médical",
+    "adresse": "12 rue du Général de Gaulle, 10000 Troyes",
+    "lat": 48.2974, "lng": 4.0744
+  },
+
+  "local_blanchisserie": {
+    "nom": "Laverie Centrale",
+    "adresse": "8 rue des Artisans, 10000 Troyes",
+    "lat": 48.2960, "lng": 4.0650
+  },
+
+  "patients": [
+    {
+      "id": "p1",
+      "nom": "Mme Dubois",
+      "adresse": "14 rue de la Paix, 10000 Troyes",
+      "lat": 48.3002, "lng": 4.0783,
+      "besoins": {
+        "infirmiere": {
+          "actif": true,
+          "jours": [1,2,3,4,5],
+          "horaire": "08:30"
+        },
+        "aide_soignant": {
+          "actif": true,
+          "jours": [1,2,3,4,5,6,7],
+          "taches": {
+            "lever":       { "actif": true, "horaire_defaut": "07:30" },
+            "toilette":    { "actif": true, "horaire_defaut": "08:00" },
+            "medicaments": { "actif": true, "horaire_defaut": "08:15" },
+            "coucher":     { "actif": true, "horaire_defaut": "21:00" }
+          }
+        },
+        "kine": {
+          "actif": true,
+          "jours": [1,3,5],
+          "horaire_prefere": "09:00",
+          "duree_min": 45
+        },
+        "livreur_repas": {
+          "actif": true,
+          "jours": { "midi": [1,2,3,4,5], "soir": [1,2,3,4,5,6,7] }
+        },
+        "blanchisserie": {
+          "actif": true,
+          "jours": [1,4]
+        }
+      }
+    },
+    {
+      "id": "p2",
+      "nom": "M. Martin",
+      "adresse": "3 av. Pasteur, 10000 Troyes",
+      "lat": 48.2952, "lng": 4.0852,
+      "besoins": {
+        "infirmiere": {
+          "actif": true,
+          "jours": [1,3,5],
+          "horaire": "09:00"
+        },
+        "aide_soignant": {
+          "actif": true,
+          "jours": [1,2,3,4,5],
+          "taches": {
+            "lever":       { "actif": true, "horaire_defaut": "08:00" },
+            "medicaments": { "actif": true, "horaire_defaut": "08:30" }
+          }
+        },
+        "kine": {
+          "actif": true,
+          "jours": [2,4],
+          "horaire_prefere": "10:30",
+          "duree_min": 30
+        },
+        "livreur_repas": {
+          "actif": true,
+          "jours": { "midi": [2,4], "soir": [] }
+        }
+      }
+    },
+    {
+      "id": "p3",
+      "nom": "Mme Legrand",
+      "adresse": "27 rue Émile Zola, 10300 Sainte-Savine",
+      "lat": 48.2925, "lng": 4.0582,
+      "besoins": {
+        "aide_soignant": {
+          "actif": true,
+          "jours": [1,2,3,4,5,6,7],
+          "taches": {
+            "toilette":    { "actif": true, "horaire_defaut": "09:00" },
+            "coucher":     { "actif": true, "horaire_defaut": "20:30" }
+          }
+        },
+        "livreur_repas": {
+          "actif": true,
+          "jours": { "midi": [1,2,3,4,5,6,7], "soir": [] }
+        },
+        "blanchisserie": {
+          "actif": true,
+          "jours": [2,5]
+        }
+      }
+    },
+    {
+      "id": "p4",
+      "nom": "M. Bernard",
+      "adresse": "9 allée des Roses, 10000 Troyes",
+      "lat": 48.3018, "lng": 4.0714,
+      "besoins": {
+        "infirmiere": {
+          "actif": true,
+          "jours": [1,2,3,4,5],
+          "horaire": "10:00"
+        },
+        "blanchisserie": {
+          "actif": true,
+          "jours": [1,3,5]
+        },
+        "livreur_repas": {
+          "actif": true,
+          "jours": { "midi": [], "soir": [1,2,3,4,5,6,7] }
+        }
+      }
+    },
+    {
+      "id": "p5",
+      "nom": "Mme Petit",
+      "adresse": "5 rue Victor Hugo, 10000 Troyes",
+      "lat": 48.2985, "lng": 4.0901,
+      "besoins": {
+        "aide_soignant": {
+          "actif": true,
+          "jours": [1,2,3,4,5,6,7],
+          "taches": {
+            "lever":       { "actif": true, "horaire_defaut": "07:00" },
+            "toilette":    { "actif": true, "horaire_defaut": "07:30" },
+            "medicaments": { "actif": true, "horaire_defaut": "08:00" },
+            "coucher":     { "actif": true, "horaire_defaut": "22:00" }
+          }
+        },
+        "kine": {
+          "actif": true,
+          "jours": [1,2,3,4,5],
+          "horaire_prefere": "14:00",
+          "duree_min": 45
+        },
+        "livreur_repas": {
+          "actif": true,
+          "jours": { "midi": [1,2,3,4,5,6,7], "soir": [1,2,3,4,5,6,7] }
+        }
+      }
+    }
+  ]
+}
